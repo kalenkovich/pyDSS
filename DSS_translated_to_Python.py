@@ -53,15 +53,21 @@ example_1 = noise_tools_examples_dir / 'example1.m'
 
 def print_highlighted_code(code, lexer):
     display(HTML(highlight(code, lexer, HtmlFormatter(full=True, linenos='inline'))))
+    
+def print_matlab_code(code):
+    print_highlighted_code(code, MatlabLexer())
+    
+def print_python_code(code):
+    print_highlighted_code(code, PythonLexer())
 
 def print_matlab_script(path):
     with open(path, 'r') as f:
         code = f.read()
-    print_highlighted_code(code, MatlabLexer())
+    print_matlab_code(code)
     
 def print_python_function(fun):
     code = inspect.getsource(fun)
-    print_highlighted_code(code, PythonLexer())
+    print_python_code(code)
 
 
 # ## Start Matlab
@@ -69,3 +75,29 @@ def print_python_function(fun):
 matlab = Matlab()
 matlab.start()
 
+
+# ## Add `NoiseTools` to the Matlab's path
+
+matlab.run_code('addpath(\'{}\')'.format(noise_tools_dir))
+
+
+# # Simulate data
+
+# Let's look at the example 1 code:
+
+print_matlab_script(example_1)
+
+
+# Let's create synthetic data in Matlab and transfer it here.
+
+example_1_code = open(example_1, 'r').readlines()
+synthethize_data_code = ''.join(example_1_code[9:21])
+print_matlab_code(synthethize_data_code)
+
+
+matlab.run_code(synthethize_data_code)
+data = matlab.get_variable('data')
+print(data.shape)
+
+
+# That is 300 time points, 30 channels and 100 trials.
