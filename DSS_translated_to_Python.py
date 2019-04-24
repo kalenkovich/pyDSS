@@ -180,3 +180,83 @@ np.allclose(R0, c0)
 
 np.allclose(R1, c1)
 
+
+# # PCA
+
+# The DSS algorithm includes two PCA rotations. Let's check that we do it in the same manner.
+
+# ## Take a look at the `NoiseTools` code
+
+pca_path = noise_tools_dir / 'nt_pcarot.m'
+print_matlab_script(pca_path)
+
+
+# We won't be working with sparse matrices so the Python code won't have the `N` parameter.
+
+# ## Take a look at the Python code
+
+print_python_function(dss.covariance_pca)
+
+
+# ## Run the code
+
+# ### Matlab
+
+matlab.run_code('[E, D] = nt_pcarot(c0);')
+E = matlab.get_variable('E')
+D = matlab.get_variable('D')
+
+
+# ### Python
+
+eigvals, eigvecs = dss.covariance_pca(R0)
+
+
+# ## Match
+
+np.allclose(eigvals, D)
+
+
+np.allclose(eigvecs, E)
+
+
+# Let's take a look at the topleft corners.
+
+eigvecs[:5, :5]
+
+
+E[:5, :5]
+
+
+# The first problem is some vectors differ in sign. Let's coerce the first row of both matrices to be positive.
+
+eigvecs *= np.sign(eigvecs[np.newaxis, 0])
+E = E * np.sign(E[np.newaxis, 0])
+
+
+np.allclose(eigvecs, E)
+
+
+# The second problem is that eigenvectors corresponding to the very small eigenvalues may differ a lot.
+
+threshold = 1e-9
+abs_threshold = max(eigvals) * threshold
+np.allclose(eigvecs[:, eigvals > abs_threshold], E[:, D.squeeze() > abs_threshold])
+
+
+# So, the results are equivalent. Let's check that both functions produce the same output if we ask them to remove eigenvalues below a given threshold.
+
+matlab.set_variable(value=threshold, varname='threshold')
+matlab.run_code('[E, D] = nt_pcarot(c0, [], threshold);')
+E = matlab.get_variable('E')
+D = matlab.get_variable('D')
+eigvals, eigvecs = dss.covariance_pca(R0, threshold=threshold)
+
+
+np.allclose(eigvals, D)
+
+
+eigvecs *= np.sign(eigvecs[np.newaxis, 0])
+E = E * np.sign(E[np.newaxis, 0])
+np.allclose(eigvecs, E)
+
