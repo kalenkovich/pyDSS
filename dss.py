@@ -62,3 +62,44 @@ def covariance_pca(R, n_keep=None, threshold=-1, descending=True):
         eigvecs = eigvecs[:, ::-1]
 
     return eigvals, eigvecs
+
+
+def unmix_covariances(C0, C1, n_keep=None, threshold=None):
+    """
+    Calculates the R2*N2*R1 part from formula (7) in de Cheveigné and Simon, 2008
+    R*, N*, C* are rotation, normalization, and covariance matrices respectively throughout the code.
+    :param C0:
+    :param C1:
+    :param n_keep:
+    :param threshold:
+    :return:
+    """
+    assert C0.ndim == 2  # rectangular matrix
+    assert C0.shape == C0.T.shape  # square matrix
+    assert C0.shape == C1.shape  # same shape
+    assert np.all(np.isfinite(C0))
+    assert np.all(np.isfinite(C1))
+
+    eigvals, R1 = covariance_pca(C0, n_keep=n_keep, threshold=threshold)
+    N2 = np.diag(np.sqrt(1 / eigvals))
+
+    # Covariance of whitened and trial-averaged data.
+    # If M is trial-averaged data then its PCA-whitened version is M*R1*N2
+    # The covariance is then N2'*R1'*M'*M*R1*N2 = N2'*R1'*C1*R1*N2
+    C2 = N2.T @ R1.T @ C1 @ R1 @ N2
+    eigvals, R2 = covariance_pca(C2, n_keep=n_keep, threshold=threshold)
+
+    # The unmixing matrix
+    U = R1 @ N2 @ R2
+    # The order is opposite from that in de Cheveigné and Simon, 2008. The reason is that
+    # here we assume that the first dimension is time, unlike in the article.
+
+    # Normalize the components
+    N3 = np.diag(1 / np.sqrt(np.diag(U.T @ C0 @ U)))
+    U = U @ N3
+
+    # Calculate phase-locked and non-phase-locked power of components
+    phase_locked_power = np.sum(np.power(C0 @ U, 2), axis=0)
+    non_phase_locked_power = np.sum(np.power(C1 @ U, 2), axis=0)
+
+    return U, phase_locked_power, non_phase_locked_power

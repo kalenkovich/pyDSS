@@ -260,3 +260,74 @@ eigvecs *= np.sign(eigvecs[np.newaxis, 0])
 E = E * np.sign(E[np.newaxis, 0])
 np.allclose(eigvecs, E)
 
+
+# # DSS from covariance matrices
+
+# Here is how the dss is run in the example:
+
+dss_code = ''.join(example_1_code[24:26])
+print_matlab_code(dss_code)
+
+
+# Two steps:
+# - `nt_dss0` calculates the unmixing matrix,
+# - `nt_mmat` calculates the mixing matrix.
+# 
+# Let's look at these two steps one by one.
+
+# ## Unmixing
+
+# ### Matlab code
+
+# Let's see what `nt_dss0` does.
+
+nt_dss0_path = noise_tools_dir / 'nt_dss0.m'
+print_matlab_script(nt_dss0_path)
+
+
+# ### Python code
+
+print_python_function(dss.unmix_covariances)
+
+
+# ### Run code
+
+# #### Matlab
+
+unmxing_matlab_code = dss_code.split('\n')[0]
+print_matlab_code(unmxing_matlab_code)
+
+
+matlab.run_code(unmxing_matlab_code)
+todss = matlab.get_variable('todss')
+pwr0 = matlab.get_variable('pwr0')
+pwr1 = matlab.get_variable('pwr1')
+
+
+# #### Python
+
+c0 = matlab.get_variable('c0')
+c1 = matlab.get_variable('c1')
+U, phase_locked_power, non_phase_locked_power = dss.unmix_covariances(c0, c1, threshold=1e-9)
+# 1e-9 is the default threshold used in the Matlab code, see line 16
+
+
+# ### Match
+
+# Filters only need to match up to a sign of columns.
+
+np.allclose(
+    U * np.sign(U[np.newaxis, 0]),
+    todss * np.sign(todss[np.newaxis, 0]),
+)
+
+
+# And they do.
+
+# Matlab code takes a square root after power calculation so we'll do that as well before matching.
+
+np.allclose(pwr0, np.sqrt(phase_locked_power))
+
+
+np.allclose(pwr1, np.sqrt(non_phase_locked_power))
+
