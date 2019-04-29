@@ -270,12 +270,12 @@ print_matlab_code(dss_code)
 
 
 # Two steps:
-# - `nt_dss0` calculates the unmixing matrix,
-# - `nt_mmat` calculates the mixing matrix.
+# 1. `nt_dss0` calculates the unmixing matrix,
+# 2. `nt_mmat` applies it to the data.
 # 
-# Let's look at these two steps one by one.
+# We'll add calculating the mixing matrix to the first step as well - it will give us the topographies of the components.
 
-# ## Unmixing
+# ## Unmixing and mixing
 
 # ### Matlab code
 
@@ -308,7 +308,7 @@ pwr1 = matlab.get_variable('pwr1')
 
 c0 = matlab.get_variable('c0')
 c1 = matlab.get_variable('c1')
-U, phase_locked_power, non_phase_locked_power = dss.unmix_covariances(c0, c1, threshold=1e-9)
+U, M, phase_locked_power, total_power = dss.unmix_covariances(c0, c1, threshold=1e-9, return_mixing=True, return_power=True)
 # 1e-9 is the default threshold used in the Matlab code, see line 16
 
 
@@ -329,5 +329,10 @@ np.allclose(
 np.allclose(pwr0, np.sqrt(phase_locked_power))
 
 
-np.allclose(pwr1, np.sqrt(non_phase_locked_power))
+np.allclose(pwr1, np.sqrt(total_power))
+
+
+# ### Check the unmixing matrix
+
+dss.is_pseudoinverse(U, M)
 
