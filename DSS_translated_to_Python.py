@@ -336,3 +336,25 @@ np.allclose(pwr1, np.sqrt(total_power))
 
 dss.is_pseudoinverse(U, M)
 
+
+# ## Applying
+
+# ### Matlab
+
+applying_matlab_code = dss_code.split('\n')[1]
+print_matlab_code(applying_matlab_code)
+
+
+matlab.run_code(applying_matlab_code)
+z = matlab.get_variable('z')
+
+
+# ### Python
+
+dss_applied = np.stack([epoch @ U for epoch in np.moveaxis(data, 2, 0)], axis=2)
+
+
+# ### Match
+
+dss.allclose_up_to_sign(z, dss_applied, component_axis=1)
+
