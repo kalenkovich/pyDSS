@@ -172,3 +172,12 @@ def allclose_up_to_sign(a, b, component_axis):
     # Multiply by signs and compare
 
     return np.allclose(a * a_signs, b * b_signs)
+
+
+def dss(data, cov_uncentered=False, cov_unnormalized=False,
+        threshold=None, n_keep=None,
+        return_mixing=True, return_power=True):
+    C0, C1 = calculate_covariances(data, uncentered=cov_uncentered, unnormalized=cov_unnormalized)
+    return unmix_covariances(C0, C1,
+                             threshold=threshold,
+                             return_mixing=return_mixing, return_power=return_power)

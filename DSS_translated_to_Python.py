@@ -355,3 +355,13 @@ dss_applied = np.stack([epoch @ U for epoch in np.moveaxis(data, 2, 0)], axis=2)
 
 dss.allclose_up_to_sign(z, dss_applied, component_axis=1)
 
+
+# # Whole thing together
+
+U, M, phase_locked_power, total_power = dss.dss(
+    data, cov_uncentered=True, cov_unnormalized=True, 
+    threshold=1e-9, return_mixing=True, return_power=True)
+
+
+dss.allclose_up_to_sign(U, todss, component_axis=1)
+
