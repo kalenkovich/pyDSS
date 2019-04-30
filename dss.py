@@ -134,3 +134,41 @@ def is_pseudoinverse(A, B):
     and np.allclose(B @ A.T, A @ B.T)
     and np.allclose(A.T @ B, B.T @ A)
     )
+
+
+def allclose_up_to_sign(a, b, component_axis):
+    """
+    Checks if arrays a and b are close up to the component sign.
+    The function can be applied to mixing and unmixing matrices, or data projected into the component space.
+    """
+    assert a.shape == b.shape
+
+    # Reshape so that each row corresponds to one component. This will help us in the next step.
+
+    def components_in_rows(c):
+        return (np.moveaxis(c, source=component_axis, destination=0)
+                .reshape(c.shape[component_axis], -1))
+
+    a_ = components_in_rows(a)
+    b_ = components_in_rows(b)
+
+    # Find the signs of the value with the largest absolute value for each component
+
+    n_components = a.shape[component_axis]
+
+    def get_signs(c):
+        return np.sign(c[np.arange(n_components), np.argmax(np.abs(c), axis=1)])
+
+    a_signs = get_signs(a_)
+    b_signs = get_signs(b_)
+
+    # For broadcasting to work we need signs to have the same number of dimensions as a and b
+
+    target_shape = np.ones(len(a.shape), dtype=int)
+    target_shape.put(component_axis, n_components)
+    a_signs = a_signs.reshape(target_shape)
+    b_signs = b_signs.reshape(target_shape)
+
+    # Multiply by signs and compare
+
+    return np.allclose(a * a_signs, b * b_signs)
