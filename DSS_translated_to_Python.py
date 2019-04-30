@@ -316,10 +316,7 @@ U, M, phase_locked_power, total_power = dss.unmix_covariances(c0, c1, threshold=
 
 # Filters only need to match up to a sign of columns.
 
-np.allclose(
-    U * np.sign(U[np.newaxis, 0]),
-    todss * np.sign(todss[np.newaxis, 0]),
-)
+dss.allclose_up_to_sign(todss, U, component_axis=1)
 
 
 # And they do.
