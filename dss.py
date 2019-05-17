@@ -176,8 +176,9 @@ def allclose_up_to_sign(a, b, component_axis):
 
 def dss(data, cov_uncentered=False, cov_unnormalized=False,
         threshold=None, n_keep=None,
-        return_mixing=True, return_power=True):
+        return_mixing=False, return_power=False):
+    
     C0, C1 = calculate_covariances(data, uncentered=cov_uncentered, unnormalized=cov_unnormalized)
     return unmix_covariances(C0, C1,
-                             threshold=threshold,
+                             threshold=threshold, n_keep=n_keep,
                              return_mixing=return_mixing, return_power=return_power)
